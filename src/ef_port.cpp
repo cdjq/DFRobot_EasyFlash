@@ -28,6 +28,28 @@
 
 #include <easyflash.h>
 #include <stdarg.h>
+#include <SPI.h>
+
+#define CS 32
+#define CS_H  digitalWrite(CS, HIGH)
+#define CS_L  digitalWrite(CS, LOW)
+extern "C" {
+	static uint8_t W25Q16_BUSY(void)
+{
+	uint8_t flag;
+	CS_L;
+	SPI.transfer(0x05);
+	flag = SPI.transfer(0xff);
+	CS_H;
+	return (flag & 0x01);
+}
+
+static void Write_Enable(void)
+{
+	CS_L;
+	SPI.transfer(0x06);
+	CS_H;
+}
 
 /* default environment variables set for user */
 static const ef_env default_env_set[] = {
@@ -63,9 +85,18 @@ EfErrCode ef_port_init(ef_env const **default_env, size_t *default_env_size) {
  */
 EfErrCode ef_port_read(uint32_t addr, uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
-
-    /* You can add your code under here. */
-
+    uint8_t i;
+	uint8_t *buf1;
+	buf1 = (uint8_t *)buf;
+	while(W25Q16_BUSY);
+    CS_L;
+	SPI.transfer(0x03);
+	SPI.transfer(addr>>16);
+	SPI.transfer(addr>>8);
+	SPI.transfer(addr);
+    for(i=0;i<size;i++)
+		*(buf+i) = SPI.transfer(0xFF);
+	CS_H;
     return result;
 }
 
@@ -84,9 +115,16 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 
     /* make sure the start address is a multiple of EF_ERASE_MIN_SIZE */
     EF_ASSERT(addr % EF_ERASE_MIN_SIZE == 0);
-
+    
     /* You can add your code under here. */
-
+    while(W25Q16_BUSY);
+	Write_Enable();
+	CS_L;
+	SPI.transfer(0x20);
+	SPI.transfer(addr>>16);
+	SPI.transfer(addr>>8);
+	SPI.transfer(addr);
+	CS_H;
     return result;
 }
 /**
@@ -102,9 +140,21 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
  */
 EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
-    
-    /* You can add your code under here. */
-
+	uint8_t *buf1;
+	uint8_t i ;
+    buf1= (uint8_t *)buf;
+	while(W25Q16_BUSY());
+	Write_Enable();
+	CS_L;
+    SPI.transfer(0x02);
+    SPI.transfer(addr>>16);
+    SPI.transfer(addr>>8);
+    SPI.transfer(addr);
+    for(i=0;i<size;i++)
+    {
+        SPI.transfer(*(buf+i));
+    }
+    CS_H;
     return result;
 }
 
@@ -184,4 +234,36 @@ void ef_print(const char *format, ...) {
     /* You can add your code under here. */
     
     va_end(args);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

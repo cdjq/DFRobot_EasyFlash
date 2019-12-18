@@ -12,37 +12,37 @@
  
 #include "DFRobot_EasyFlash.h"
   
-inline eFfErr_t DFRobot_EasyFlash::begin(void)
+inline EfErrCode DFRobot_EasyFlash::begin(void)
 {
-	return easyflash_init(void);
+	return easyflash_init();
 }
 
-inline eEfErr_t DFRobot_EasyFlash::OptimizeMemory(void)
+inline EfErrCode DFRobot_EasyFlash::OptimizeMemory(void)
 {
-	return ef_load_env(void);
+	return ef_load_env();
 }
 
-inline eEfErr_t DFRobot_EasyFlash::formatEasyFlash(void)
+inline EfErrCode DFRobot_EasyFlash::formatEasyFlash(void)
 {
-    return ef_env_set_default(void);
+    return ef_env_set_default();
 }
 
 
 
 
-inline eEfErr_t DFRobot_EasyFlash::setValue(const char *key, const void *valueBuf, size_t bufLen)
+inline EfErrCode DFRobot_EasyFlash::setValue(const char *key, const void *valueBuf, size_t bufLen)
 {
 	return ef_set_env_blob(key, valueBuf, bufLen);
 }
 
-inline eEfErr_t DFRobot_EasyFlash::setValue(const char *key, const char *value)
+inline EfErrCode DFRobot_EasyFlash::setValue(const char *key, const char *value)
 {
     return ef_set_env_blob(key, value, strlen(value));
 }
 
-inline eEfErr_t DFRobot_EasyFlash::setValue(const char *key, String &value)
+inline EfErrCode DFRobot_EasyFlash::setValue(const char *key, String &value)
 {
-    return ef_set_env_blob(key, value.buffer, value.len);
+    return ef_set_env_blob(key, value.c_str(), value.length());
 }
 
 
@@ -53,9 +53,9 @@ inline size_t DFRobot_EasyFlash::getValue(const char *key, void *valueBuf, size_
 	return ef_get_env_blob(key, valueBuf, bufLen, savedValueLen);
 }
 
-inline size_t DFRobot_EasyFlash::getValue(String key, void *valueBuf, size_t bufLen, size_t *savedValueLen)
+inline size_t DFRobot_EasyFlash::getValue(String &key, void *valueBuf, size_t bufLen, size_t *savedValueLen)
 {   
-	return ef_get_env_blob(key.buffer, valueBuf, bufLen, savedValueLen);
+	return ef_get_env_blob(key.c_str(), valueBuf, bufLen, savedValueLen);
 }
 
 inline size_t DFRobot_EasyFlash::getValue(const char *key, void *valueBuf, size_t bufLen)
@@ -65,7 +65,7 @@ inline size_t DFRobot_EasyFlash::getValue(const char *key, void *valueBuf, size_
 
 inline size_t DFRobot_EasyFlash::getValue(String &key, void *valueBuf, size_t bufLen)
 {   
-	return ef_get_env_blob(key.buffer, valueBuf, bufLen, NULL);
+	return ef_get_env_blob(key.c_str(), valueBuf, bufLen, NULL);
 }
 
 static bool ef_is_str(uint8_t *value, size_t len)
@@ -83,74 +83,50 @@ static bool ef_is_str(uint8_t *value, size_t len)
 
 String DFRobot_EasyFlash::getValue(const char *key)
 {   
-    static char value[EF_STR_ENV_VALUE_MAX_SIZE + 1];
+    static char value[128/*EF_STR_ENV_VALUE_MAX_SIZE*/ + 1];
     size_t get_size;
 
-    if ((get_size = ef_get_env_blob(key, value, EF_STR_ENV_VALUE_MAX_SIZE, NULL)) > 0) {
+    if ((get_size = ef_get_env_blob(key, value, 128/*EF_STR_ENV_VALUE_MAX_SIZE*/, NULL)) > 0) {
         /* the return value must be string */
         if (ef_is_str((uint8_t *)value, get_size)) {
             value[get_size] = '\0';
             return String(value);
         } else {
             EF_INFO("Warning: The ENV value isn't string. Could not be returned\n");
-            return NULL;
+            return String(NULL);;
         }
     }
 
-    return NULL;
+    return String(NULL);;
 }
 
 String DFRobot_EasyFlash::getValue(String &key)
 {   
-    static char value[EF_STR_ENV_VALUE_MAX_SIZE + 1];
+    static char value[128/*EF_STR_ENV_VALUE_MAX_SIZE*/ + 1];
     size_t get_size;
 
-    if ((get_size = ef_get_env_blob(key.buffer, value, EF_STR_ENV_VALUE_MAX_SIZE, NULL)) > 0) {
+    if ((get_size = ef_get_env_blob(key.c_str(), value,128/*EF_STR_ENV_VALUE_MAX_SIZE*/, NULL)) > 0) {
         /* the return value must be string */
         if (ef_is_str((uint8_t *)value, get_size)) {
             value[get_size] = '\0';
             return String(value);
         } else {
             EF_INFO("Warning: The ENV value isn't string. Could not be returned\n");
-            return NULL;
+            return String(NULL);
         }
     }
 
-    return NULL;
+    return String(NULL);;
 }
 
 
 
-inline eEfErr_t DFRobot_EasyFlash::delValue(const char *key)
+inline EfErrCode DFRobot_EasyFlash::delValue(const char *key)
 {
-	return = ef_del_env(key);
+	return  ef_del_env(key);
 }
 
-inline eEfErr_t DFRobot_EasyFlash::delValue(String &key)
+inline EfErrCode DFRobot_EasyFlash::delValue(String &key)
 {
-	return = ef_del_env(key.buffer);
+	return  ef_del_env(key.c_str());
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -21,8 +21,8 @@
 #include "easyflash.h"
 #include <WString.h>
 class DFRobot_EasyFlash
-{
-protected:
+{/*
+public:
 /*    typef struct efEnv {
         char *key;
         void *value;
@@ -48,7 +48,7 @@ protected:
     } eEfSectorStatus_t;
 
     /* env status */
-     typedef enum envStatus {
+/*     typedef enum envStatus {
         ENV_UNUSED,
         ENV_PRE_WRITE,
         ENV_WRITE,
@@ -60,36 +60,36 @@ protected:
 
     typedef struct envNodeObj {
         eEnvStatus_t status;                      /**< ENV node status, @see nodeStatus_t */
-        bool crcIsOk;                             /**< ENV node CRC32 check is OK */
-        uint8_t nameLen;                          /**< name length */
-        uint32_t magic;                           /**< magic word('K', 'V', '1', '0') */
-        uint32_t len;                             /**< ENV node total length (header + name + value),must aligned by EF_WR_GRAN */
-        uint32_t valueLen;
-        char name[EF_ENV_NAME_MAX];
+ /*       bool crcIsOk;                             /**< ENV node CRC32 check is OK */
+ //       uint8_t nameLen;                          /**< name length */
+  //      uint32_t magic;                           /**< magic word('K', 'V', '1', '0') */
+ //       uint32_t len;                             /**< ENV node total length (header + name + value),must aligned by EF_WR_GRAN */
+    //    uint32_t valueLen;
+  /*      char name[EF_ENV_NAME_MAX];
         struct {
             uint32_t start;
             uint32_t value;
         } addr;
     } *sEnvNodeObj_p;	
-
+*/
 public:
-    eEfErr_t begin(void);			
-    eEfErr_t OptimizeMemory(void);
-    eEfErr_t formatEasyFlash(void);
+    EfErrCode begin(void);			
+    EfErrCode OptimizeMemory(void);
+    EfErrCode formatEasyFlash(void);
 	
 	#ifdef EF_USING_ENV
     /* supported on ef_env.c */
-	eEfErr_t setValue(const char *key, const void *valueBuf, size_t bufLen);
-    eEfErr_t setValue(const char *key, const char *value);
-    eEfErr_t setValue(const char *key, String &value);
+	EfErrCode setValue(const char *key, const void *valueBuf, size_t bufLen);
+    EfErrCode setValue(const char *key, const char *value);
+    EfErrCode setValue(const char *key, String &value);
 	size_t getValue(const char *key, void *valueBuf, size_t bufLen, size_t *savedValueLen);
-    size_t getValue(String key, void *valueBuf, size_t bufLen, size_t *savedValueLen);
+    size_t getValue(String &key, void *valueBuf, size_t bufLen, size_t *savedValueLen);
     size_t getValue(const char *key, void *valueBuf, size_t bufLen);
     size_t getValue(String &key, void *valueBuf, size_t bufLen);
     String getValue(const char *key);
     String getValue(String &key);
-    eEfErr_t delValue(const char *key);
-	eEfErr_t delValue(String &key);
+    EfErrCode delValue(const char *key);
+	EfErrCode delValue(String &key);
     #endif
 
     #ifdef EF_USING_LOG
