@@ -1,13 +1,14 @@
 /*!
- * @file DFRobot_EasyFlash.cpp
- * @brief 实现DFRobot_EasyFlash 类的功能
- * @n 它包含了这个类的所有函数
+ * @file DFRobot_EasyFlash.h
+ * @brief 定义DFRobot_EasyFlash 类的数据库部分函数
+ * @n 它包含了这个类的数据库部分非内联函数的定义
+ * @n 得到Value值，并返回String类对象
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @licence     The MIT License (MIT)
- * @author [Ouki](ouki.wang@dfrobot.com)
+ * @author [LiYue](yue.li@dfrobot.com)
  * @version  V1.0
- * @date  2019-12-14
- * @url https://github.com/ouki-wang/DFRobot_Sensor
+ * @date  2019-12-16
+ * @url https://github.com/cdjq/DFRobot_EasyFlash
  */
  
 #include "DFRobot_EasyFlash.h"
@@ -23,6 +24,7 @@ static bool ef_is_str(uint8_t *value, size_t len)
             return false;
         }
     }
+#undefine __is_print(ch)	
     return true;
 }
 

@@ -81,10 +81,10 @@
  */
 
 /* backup area start address */
-#define EF_START_ADDR              (0)//  12,582,912‬/* @note you must define it for a value */
+#define EF_START_ADDR              12,582,912‬// 12M * @note you must define it for a value */
 
 /* ENV area size. It's at least one empty sector for GC. So it's definition must more then or equal 2 flash sector size. */
-#define ENV_AREA_SIZE             4096*2// 1,572,864 /* @note you must define it for a value if you used ENV */
+#define ENV_AREA_SIZE             4096*384// 1.5M * @note you must define it for a value if you used ENV */
 
 /* saved log area size */
 //#define LOG_AREA_SIZE             0/* @note you must define it for a value if you used log */

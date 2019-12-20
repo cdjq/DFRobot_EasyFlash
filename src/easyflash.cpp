@@ -47,11 +47,9 @@
  *   If you want use it please using the V3.X version.
  */
 #include <variant.h>
-//#include <Arduino.h>
+
 #include <easyflash.h>
-//#include <Uart.h>
-//#include <SERCOM.h>
-//#include <Print.h>
+
 #if !defined(EF_START_ADDR)
 #error "Please configure backup area start address (in ef_cfg.h)"
 #endif
@@ -65,8 +63,8 @@ extern "C"{
  *
  * @return result
  */
-//SERCOM sercom5(0x42001C00U);
-//Uart Serial0( &sercom5, 36, 35, 3, 1 ) ;
+
+
 EfErrCode easyflash_init(void) {	
     extern EfErrCode ef_port_init(ef_env const **default_env, size_t *default_env_size);
     extern EfErrCode ef_env_init(ef_env const *default_env, size_t default_env_size);
