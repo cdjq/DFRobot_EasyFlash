@@ -1,7 +1,7 @@
 /*
  * This file is part of the EasyFlash Library.
  *
- * Copyright (c) 2015-2019, Armink, <armink.ztl@gmail.com>
+ * Copyright (c) 2014-2019, Armink, <armink.ztl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -22,42 +22,9 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Function: It is the configure head file for this library.
- * Created on: 2015-07-14
+ * Function: Initialize interface for this library.
+ * Created on: 2014-09-09
  */
-
-#ifndef EF_CFG_H_
-#define EF_CFG_H_
-
-/* using ENV function, default is NG (Next Generation) mode start from V4.0 */
-#define EF_USING_ENV
-
-#ifdef EF_USING_ENV
-/* Auto update ENV to latest default when current ENV version number is changed. */
-/* #define EF_ENV_AUTO_UPDATE */
-/**
- * ENV version number defined by user.
- * Please change it when your firmware add a new ENV to default_env_set.
- */
-#define EF_ENV_VER_NUM            0/* @note you must define it for a value, such as 0 */
- 
-/* MCU Endian Configuration, default is Little Endian Order.
-/* #define EF_BIG_ENDIAN  */         
-
-#endif /* EF_USING_ENV */
-
-/* using IAP function */
-/* #define EF_USING_IAP */
-
-/* using save log function */
-/* #define EF_USING_LOG */
-
-/* The minimum size of flash erasure. May be a flash sector size. */
-#define EF_ERASE_MIN_SIZE         4096/* @note you must define it for a value */
-
-/* the flash write granularity, unit: bit
- * only support 1(nor flash)/ 8(stm32f4)/ 32(stm32f1) */
-#define EF_WRITE_GRAN             8/* @note you must define it for a value */
 
 /*
  *
@@ -79,17 +46,64 @@
  *   Beacuse it will use ram to buffer the ENV and spend more flash erase times.
  *   If you want use it please using the V3.X version.
  */
+#include <variant.h>
+//#include <Arduino.h>
+#include <easyflash.h>
+//#include <Uart.h>
+//#include <SERCOM.h>
+//#include <Print.h>
+#if !defined(EF_START_ADDR)
+#error "Please configure backup area start address (in ef_cfg.h)"
+#endif
 
-/* backup area start address */
-#define EF_START_ADDR              (0)//  12,582,912‬/* @note you must define it for a value */
+#if !defined(EF_ERASE_MIN_SIZE)
+#error "Please configure minimum size of flash erasure (in ef_cfg.h)"
+#endif
+extern "C"{
+/**
+ * EasyFlash system initialize.
+ *
+ * @return result
+ */
+//SERCOM sercom5(0x42001C00U);
+//Uart Serial0( &sercom5, 36, 35, 3, 1 ) ;
+EfErrCode easyflash_init(void) {	
+    extern EfErrCode ef_port_init(ef_env const **default_env, size_t *default_env_size);
+    extern EfErrCode ef_env_init(ef_env const *default_env, size_t default_env_size);
+    extern EfErrCode ef_iap_init(void);
+    extern EfErrCode ef_log_init(void);
 
-/* ENV area size. It's at least one empty sector for GC. So it's definition must more then or equal 2 flash sector size. */
-#define ENV_AREA_SIZE             4096*2// 1,572,864 /* @note you must define it for a value if you used ENV */
+    size_t default_env_set_size = 0;
+    const ef_env *default_env_set;
+    EfErrCode result = EF_NO_ERR;
+    
+    result = ef_port_init(&default_env_set, &default_env_set_size);
 
-/* saved log area size */
-//#define LOG_AREA_SIZE             0/* @note you must define it for a value if you used log */
+#ifdef EF_USING_ENV
+    if (result == EF_NO_ERR) {
+        result = ef_env_init(default_env_set, default_env_set_size);
+    }
+#endif
 
-/* print debug information of flash */
-//#define PRINT_DEBUG
+#ifdef EF_USING_IAP
+    if (result == EF_NO_ERR) {
+        result = ef_iap_init();
+    }
+#endif
 
-#endif /* EF_CFG_H_ */
+#ifdef EF_USING_LOG
+    if (result == EF_NO_ERR) {
+        result = ef_log_init();
+    }
+#endif
+
+    if (result == EF_NO_ERR) {
+        EF_INFO("EasyFlash V%s is initialize success.\n", EF_SW_VERSION);
+    } else {
+        EF_INFO("EasyFlash V%s is initialize fail.\n", EF_SW_VERSION);
+    }
+    EF_INFO("You can get the latest version on https://github.com/armink/EasyFlash .\n");
+
+    return result;
+}
+}
