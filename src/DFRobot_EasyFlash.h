@@ -23,8 +23,8 @@
 class DFRobot_EasyFlash
 {
 public:
-/* !
- * @brief EfErrCode是easyflash库自定义的枚举类型，用来反应程序运行状态，定义在ef_def.h：
+ 
+/* @brief EfErrCode是easyflash库自定义的枚举类型，用来反应程序运行状态，定义在ef_def.h：
  typedef enum {
     EF_NO_ERR,
     EF_ERASE_ERR,
@@ -38,12 +38,13 @@ public:
  */
   /**
    * @brief 初始化函数
-   * @n 完成引脚和SPI配置
-   * @n 检查ef_cfg.h中宏是否配置正确
-   * @n 完成一些全局变量初始化
-   * @n 初始化sector和env的缓存数组用来加快查找速度
-   * @n 调用内部ef_load_env()函数完成内存再分配的功能
-   * @n 检查固件版本，如果有更新，自动更新写入默认环境变量
+   * @n 调用ef_port_init()完成引脚和SPI配置
+   * @n 调用ef_env_init()检查ef_cfg.h中宏是否配置正确
+   * @n                  完成一些全局变量初始化
+   * @n                  初始化sector和env的缓存数组用来加快查找速度
+   * @n                  调用内部ef_load_env()函数完成内存再分配的功能
+   * @n                  检查固件版本，如果有更新，自动更新写入默认环境变量
+   * @n 调用ef_log_init()检查宏，找到log的起始和结束地址，并判断log内存有没有错误，有错就格式化log
    * @return 返回程序运行状态
    */
     EfErrCode begin(void);
@@ -60,7 +61,7 @@ public:
    */
     EfErrCode OptimizeMemory(void);
   /**
-   * @brief 格式化所有sector并写入默认env
+   * @brief 格式化env部分所有sector并写入默认env
    * @return 程序运行状态
    */
     EfErrCode formatEasyFlash(void);
@@ -112,10 +113,37 @@ public:
 
     #ifdef EF_USING_LOG
     /* ef_log.c */
-    eEfErr_t efLogRead(size_t index, uint32_t *log, size_t size);
-    eEfErr_t efLogWrite(const uint32_t *log, size_t size);
-    eEfErr_t efLogClean(void);
-    size_t efLogGetUsedSize(void);
+	
+  /**
+   * @brief 根据index和size，读取spiflash指定内容
+   * @param index 起始索引，从log的首字节计算的读取字节的偏移值
+   * @param log 指向用来存储log的内存地址的指针
+   * @param size 读取的字节数
+   * @return 返回运行状态
+   */
+    EfErrCode logRead(size_t index, void *log, size_t size);
+    EfErrCode logRead(size_t index, String &log, size_t size);
+
+  /**
+   * @brief 写log
+   * @param log 指向用来存储log的内存地址的指针
+   * @param size 写的字节数
+   * @return 返回运行状态
+   */	
+    EfErrCode logWrite(const uint32_t *log, size_t size);
+	EfErrCode logWrite(String &log, size_t size);
+	
+  /**
+   * @brief 格式化log
+   * @return 返回运行状态
+   */    
+	EfErrCode logClean(void);
+
+  /**
+   * @brief 获取使用的字节数
+   * @return 返回log区使用的字节数
+   */	
+    size_t logGetSize(void);
     #endif
 	/* print */
 /*	void efLogDebug(const char *file, const long line, const char *format, ...);
@@ -156,7 +184,6 @@ inline EfErrCode DFRobot_EasyFlash::setValue(const char *key, String &value)
 
 
 
-
 inline size_t DFRobot_EasyFlash::getValue(const char *key, void *valueBuf, size_t bufLen, size_t *savedValueLen)
 {   
 	return ef_get_env_blob(key, valueBuf, bufLen, savedValueLen);
@@ -177,6 +204,7 @@ inline size_t DFRobot_EasyFlash::getValue(String &key, void *valueBuf, size_t bu
 	return ef_get_env_blob(key.c_str(), valueBuf, bufLen, NULL);
 }
 
+
 inline EfErrCode DFRobot_EasyFlash::delValue(const char *key)
 {
 	return  ef_del_env(key);
@@ -185,5 +213,36 @@ inline EfErrCode DFRobot_EasyFlash::delValue(const char *key)
 inline EfErrCode DFRobot_EasyFlash::delValue(String &key)
 {
 	return  ef_del_env(key.c_str());
+}
+
+
+inline EfErrCode logRead(size_t index, void *log, size_t size)
+{
+	return ef_log_read(index, (uint32_t *)log, ((size+3)/4)*4);
+}
+
+inline EfErrCode logRead(size_t index, String &log, size_t size)
+{
+	return ef_log_read(index, (uint32_t *)log.c_str()/*(const_cast<char *>(log.c_str()))*/, ((size+3)/4)*4);
+}
+
+inline EfErrCode logWrite(const void *log, size_t size)
+{
+	return ef_log_write((const uint32_t *)log, ((size+3)/4)*4);
+}
+
+inline EfErrCode logWrite(String &log, size_t size)
+{
+	return ef_log_write((const uint32_t *)log.c_str(), ((size+3)/4)*4);
+}
+
+inline 	EfErrCode logClean(void)
+{
+	return ef_log_clean();
+}
+
+inline size_t logGetSize(void)
+{
+	return ef_log_get_used_size();
 }
 #endif /* DF_EASYFLASH_H */

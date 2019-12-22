@@ -23,8 +23,7 @@ static bool ef_is_str(uint8_t *value, size_t len)
         if (!__is_print(value[i])) {
             return false;
         }
-    }
-#undefine __is_print(ch)	
+    }	
     return true;
 }
 

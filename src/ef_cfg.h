@@ -50,7 +50,7 @@
 /* #define EF_USING_IAP */
 
 /* using save log function */
-/* #define EF_USING_LOG */
+#define EF_USING_LOG 
 
 /* The minimum size of flash erasure. May be a flash sector size. */
 #define EF_ERASE_MIN_SIZE         4096/* @note you must define it for a value */
@@ -81,13 +81,13 @@
  */
 
 /* backup area start address */
-#define EF_START_ADDR              12,582,912‬// 12M * @note you must define it for a value */
+#define EF_START_ADDR              0XC00000//12582912‬ /* 12M * @note you must define it for a value */
 
 /* ENV area size. It's at least one empty sector for GC. So it's definition must more then or equal 2 flash sector size. */
-#define ENV_AREA_SIZE             4096*384// 1.5M * @note you must define it for a value if you used ENV */
+#define ENV_AREA_SIZE              4096*384 /* 1.5M  @note you must define it for a value if you used ENV */
 
 /* saved log area size */
-//#define LOG_AREA_SIZE             0/* @note you must define it for a value if you used log */
+#define LOG_AREA_SIZE             4096*512 /* 2M @note you must define it for a value if you used log */
 
 /* print debug information of flash */
 //#define PRINT_DEBUG

@@ -937,7 +937,6 @@ static EfErrCode format_sector(uint32_t addr, uint32_t combined_value)
     struct sector_hdr_data sec_hdr;
 
     EF_ASSERT(addr % SECTOR_SIZE == 0);
-
     result = ef_port_erase(addr, SECTOR_SIZE);
     if (result == EF_NO_ERR) {
         /* initialize the header data */
@@ -947,9 +946,8 @@ static EfErrCode format_sector(uint32_t addr, uint32_t combined_value)
         sec_hdr.magic = SECTOR_MAGIC_WORD;
         sec_hdr.combined = combined_value;
         sec_hdr.reserved = 0xFFFFFFFF;
-        /* save the header */
+        /* save the header */	
         result = ef_port_write(addr, (uint32_t *)&sec_hdr, sizeof(struct sector_hdr_data));
-
 #ifdef EF_ENV_USING_CACHE
         /* delete the sector cache */
         update_sector_cache(addr, addr + SECTOR_SIZE);
