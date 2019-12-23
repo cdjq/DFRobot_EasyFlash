@@ -40,10 +40,10 @@ public:
    * @brief 初始化函数
    * @n 调用ef_port_init()完成引脚和SPI配置
    * @n 调用ef_env_init()检查ef_cfg.h中宏是否配置正确
-   * @n                  完成一些全局变量初始化
-   * @n                  初始化sector和env的缓存数组用来加快查找速度
-   * @n                  调用内部ef_load_env()函数完成内存再分配的功能
-   * @n                  检查固件版本，如果有更新，自动更新写入默认环境变量
+   *                     完成一些全局变量初始化
+   *                     初始化sector和env的缓存数组用来加快查找速度
+   *                     调用内部ef_load_env()函数完成内存再分配的功能
+   *                     检查固件版本，如果有更新，自动更新写入默认环境变量
    * @n 调用ef_log_init()检查宏，找到log的起始和结束地址，并判断log内存有没有错误，有错就格式化log
    * @return 返回程序运行状态
    */
@@ -72,15 +72,18 @@ public:
   /**
    * @brief 在数据库中设置键值对
    * @param key 指向字符或字符串key的指针
+   * @param key 含有key值的String对象
    * @param valueBuf 指向存放数据的valueBuf的const void*型指针
    * @param bufLen valueBuf的字节数   
    * @param value 指向字符或字符串value的const char*型指针
-   * @param value String对象
+   * @param value 含有value值的String对象
    * @return 返回运行状态
    */
 	EfErrCode setValue(const char *key, const void *valueBuf, size_t bufLen);
     EfErrCode setValue(const char *key, const char *value);
     EfErrCode setValue(const char *key, String &value);
+	EfErrCode setValue(String &key, String &value);
+	EfErrCode setValue(String &key, const char *value);
 
   /**
    * @brief 根据key获得value值
@@ -116,9 +119,9 @@ public:
 	
   /**
    * @brief 根据index和size，读取spiflash指定内容
-   * @param index 起始索引，从log的首字节计算的读取字节的偏移值
+   * @param index 起始索引，读取起始字节相对log首字节的偏移值，必须小于当前log文件的总长度
    * @param log 指向用来存储log的内存地址的指针
-   * @param size 读取的字节数
+   * @param size 读取的字节数，如果index + size >当前log文件总长度，则只读取（当前文件总长 - index）字节数据 
    * @return 返回运行状态
    */
     EfErrCode logRead(size_t index, void *log, size_t size);
@@ -127,10 +130,10 @@ public:
   /**
    * @brief 写log
    * @param log 指向用来存储log的内存地址的指针
-   * @param size 写的字节数
+   * @param size 写的字节数，必须是4的整数倍，如果不是，最后size%4个字节会丢失
    * @return 返回运行状态
    */	
-    EfErrCode logWrite(const uint32_t *log, size_t size);
+    EfErrCode logWrite(const void *log, size_t size);
 	EfErrCode logWrite(String &log, size_t size);
 	
   /**
@@ -143,7 +146,7 @@ public:
    * @brief 获取使用的字节数
    * @return 返回log区使用的字节数
    */	
-    size_t logGetSize(void);
+    size_t logSize(void);
     #endif
 	/* print */
 /*	void efLogDebug(const char *file, const long line, const char *format, ...);
@@ -182,6 +185,15 @@ inline EfErrCode DFRobot_EasyFlash::setValue(const char *key, String &value)
     return ef_set_env_blob(key, value.c_str(), value.length());
 }
 
+inline EfErrCode DFRobot_EasyFlash::setValue(String &key, String &value)
+{
+    return ef_set_env_blob(key.c_str(), value.c_str(), value.length());
+}
+
+inline EfErrCode DFRobot_EasyFlash::setValue(String &key, const char *value)
+{
+    return ef_set_env_blob(key.c_str(), value, strlen(value));
+}
 
 
 inline size_t DFRobot_EasyFlash::getValue(const char *key, void *valueBuf, size_t bufLen, size_t *savedValueLen)
@@ -216,32 +228,33 @@ inline EfErrCode DFRobot_EasyFlash::delValue(String &key)
 }
 
 
-inline EfErrCode logRead(size_t index, void *log, size_t size)
+inline EfErrCode DFRobot_EasyFlash::logRead(size_t index, void *log, size_t size)
 {
 	return ef_log_read(index, (uint32_t *)log, ((size+3)/4)*4);
 }
 
-inline EfErrCode logRead(size_t index, String &log, size_t size)
+inline EfErrCode DFRobot_EasyFlash::logRead(size_t index, String &log, size_t size)
 {
-	return ef_log_read(index, (uint32_t *)log.c_str()/*(const_cast<char *>(log.c_str()))*/, ((size+3)/4)*4);
+	return ef_log_read(index, (uint32_t *)log.c_str()/*(reinterpret_cast<uint32_t *>)(const_cast<char *>(log.c_str()))*/, ((size+3)/4)*4);
 }
 
-inline EfErrCode logWrite(const void *log, size_t size)
+
+inline EfErrCode DFRobot_EasyFlash::logWrite(const void *log, size_t size)
 {
-	return ef_log_write((const uint32_t *)log, ((size+3)/4)*4);
+	return ef_log_write((const uint32_t *)log, ((size-3)/4)*4);
 }
 
-inline EfErrCode logWrite(String &log, size_t size)
+inline EfErrCode DFRobot_EasyFlash::logWrite(String &log, size_t size)
 {
-	return ef_log_write((const uint32_t *)log.c_str(), ((size+3)/4)*4);
+	return ef_log_write((const uint32_t *)log.c_str(), ((size-3)/4)*4);
 }
 
-inline 	EfErrCode logClean(void)
+inline 	EfErrCode DFRobot_EasyFlash::logClean(void)
 {
 	return ef_log_clean();
 }
 
-inline size_t logGetSize(void)
+inline size_t DFRobot_EasyFlash::logSize(void)
 {
 	return ef_log_get_used_size();
 }
