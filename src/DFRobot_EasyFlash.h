@@ -64,18 +64,18 @@ public:
    * @brief 格式化env部分所有sector并写入默认env
    * @return 程序运行状态
    */
-    EfErrCode formatEasyFlash(void);
+    EfErrCode format(void);
 	
 	#ifdef EF_USING_ENV
     /* supported on ef_env.c */
 
   /**
-   * @brief 在数据库中设置键值对
+   * @brief 在数据库中设置键值对，注意key值不能超过32字节，value不能超过4010字节
    * @param key 指向字符或字符串key的指针
    * @param key 含有key值的String对象
-   * @param valueBuf 指向存放数据的valueBuf的const void*型指针
-   * @param bufLen valueBuf的字节数   
-   * @param value 指向字符或字符串value的const char*型指针
+   * @param valueBuf 指向要写入数据的指针
+   * @param bufLen 要写入的value的字节数
+   * @param value 指向字符或字符串value的指针
    * @param value 含有value值的String对象
    * @return 返回运行状态
    */
@@ -165,7 +165,7 @@ inline EfErrCode DFRobot_EasyFlash::OptimizeMemory(void)
 	return ef_load_env();
 }
 
-inline EfErrCode DFRobot_EasyFlash::formatEasyFlash(void)
+inline EfErrCode DFRobot_EasyFlash::format(void)
 {
     return ef_env_set_default();
 }

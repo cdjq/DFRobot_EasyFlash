@@ -1,5 +1,5 @@
 /*!
- * @file dualWriteRead.ino
+ * @file WriteReadTwice.ino
  * @brief 写入2次log值然后读log
  * @n 实验现象：串口监视器打印出log的值
  *
@@ -14,8 +14,8 @@
  
 #include <DFRobot_EasyFlash.h>
 DFRobot_EasyFlash easyflash;
-const char logToWrite[20] ="hello world!";
-const char nextLog[20] = "Nice to meet you!";
+const char logToWrite[20] ="The first time";
+const char nextLog[20] = "The second time";
 char logRec[40];
 size_t size;
 

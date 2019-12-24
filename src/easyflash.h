@@ -30,6 +30,7 @@
 #ifndef EASYFLASH_H_
 #define EASYFLASH_H_
 
+#include <Arduino.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>

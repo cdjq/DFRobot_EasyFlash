@@ -25,8 +25,7 @@
  * Function: Portable interface for each platform.
  * Created on: 2015-01-16
  */
- 
-#include <Arduino.h>
+
 #include <easyflash.h>
 #include <stdarg.h>
 
