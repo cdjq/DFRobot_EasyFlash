@@ -1,12 +1,4 @@
-# DFRobot_Sensor
-数据手册上抄一下芯片的描述
-
-这里写模块介绍，做到读完这段，就能对模块有初步了解，让客户懂的用这个模块能干什么（数据手册通常比较官方，这里你可以举例子，更场景化）<br>
-这个模块的优点，告诉用户为什么要购买这个模块。一些关键术语，我们要在readme中有解释
-
-这里需要显示拍照图片，可以一张图片，可以多张图片（不要用SVG图）
-
-![正反面svg效果图](https://github.com/ouki-wang/DFRobot_Sensor/raw/master/resources/images/SEN0245svg1.png)
+# DFRobot_EasyFlash
 
 
 ## 产品链接（链接到英文商城）
@@ -23,7 +15,9 @@
 
 ## Summary
 
-这里填写当前Arduino软件库完成了基础功能，特色功能
+### 这个库实现了spiflash上的数据库功能和log功能
+这个库应用于FireBeetle主板，基于ATmelSAMD21处理器和W25Q128外部spiflash。
+可以写入键值对，再通过键获得值。
 
 ## Installation
 
@@ -34,65 +28,133 @@ To use this library, first download the library file, paste it into the \Arduino
 ```C++
   /**
    * @brief 初始化函数
-   * @return 返回0表示初始化成功，返回其他值表示初始化失败
+   * @n 调用ef_port_init()完成引脚和SPI配置
+   * @n 调用ef_env_init()检查ef_cfg.h中宏是否配置正确
+   *                     完成一些全局变量初始化
+   *                     初始化sector和env的缓存数组用来加快查找速度
+   *                     调用内部ef_load_env()函数完成内存再分配的功能
+   *                     检查固件版本，如果有更新，自动更新写入默认环境变量
+   * @n 调用ef_log_init()检查宏，找到log的起始和结束地址，并判断log内存有没有错误，有错就格式化log
+   * @return 返回程序运行状态
    */
-  int begin(void);
-  
-  /**
-   * @brief 获取声音强度值
-   * @return 返回声音强度，单位是DB
-   */
-  uint16_t getSoundStrength(void);
+    EfErrCode begin(void);
 
   /**
-   * @brief 获取光线强度值
-   * @return 返回光线强度，单位是流明
+   * @brief 在程序初始化之后，调用该函数会重新分配数据库内存
+   * @n 该函数功能等价于ef_load_env()
+   * @n 检查所有sector的头，如果所有头都错误，则格式化所有sector并写入默认env
+   * @n 若有dirty状态为gc的sector，进行gc_collect:判断内存使用是否超过threshold，若超过，找出所有dirty状态为ture和gc的sector，
+        移动sector中所有状态为write和pre_delete的env，并格式化sector
+   * @n 找出所有状态为pre_delete和pre_write的env，对他们进行delete和write
+   * @n 若产生gc请求，再次进行gc_collect
+   * @return 返回程序运行状态
    */
-  uint16_t getLightStrength(void);
-  
-    /**
-   * @brief 切换模式
-   * @return 返回0操作成功, 返回其他值操作失败
-   */
-
-  uint8_t switchMode(uint8_t mode);
+    EfErrCode OptimizeMemory(void);
   /**
-   * @brief 设置LED灯的颜色
-     @note  设置颜色后，0.2秒后生效
-   * @param r 红色通道颜色值，范围0-255
-   * @param g 绿色通道颜色值，范围0-255
-   * @param b 蓝色通道颜色值，范围0-255
+   * @brief 格式化env部分所有sector并写入默认env
+   * @return 程序运行状态
    */
-   void setLED(uint8_t r, uint8_t g, uint8_t b);
+    EfErrCode format(void);
+	
+	#ifdef EF_USING_ENV
+    /* supported on ef_env.c */
 
-   /**
-   * @brief 设置LED灯的颜色
-     @note  设置颜色后，0.2秒后生效
-   * @param color rgb565格式的颜色值
+  /**
+   * @brief 在数据库中设置键值对，注意key值不能超过32字节，value不能超过4010字节
+   * @param key 指向字符或字符串key的指针
+   * @param key 含有key值的String对象
+   * @param valueBuf 指向要写入数据的指针
+   * @param bufLen 要写入的value的字节数
+   * @param value 指向字符或字符串value的指针
+   * @param value 含有value值的String对象
+   * @return 返回运行状态
    */
-   void setLED(uint16_t color);
+	EfErrCode setValue(const char *key, const void *valueBuf, size_t bufLen);
+    EfErrCode setValue(const char *key, const char *value);
+    EfErrCode setValue(const char *key, String &value);
+	EfErrCode setValue(String &key, String &value);
+	EfErrCode setValue(String &key, const char *value);
+
+  /**
+   * @brief 根据key获得value值
+   * @param key 指向字符或字符串key的指针
+   * @param key String对象
+   * @param valueBuf 指向存放数据的valueBuf的const void*型指针
+   * @param bufLen valueBuf的字节数
+   * @param savedValueLen 指向一个size_t型数据，函数运行时会将该指针指向的值赋为value实际的字节数
+   * @param value 指向字符或字符串value的const char*型指针
+   * @param value String对象
+   * @return 返回读取到的value的字节数
+   * @return 返回String对象
+   */	
+	size_t getValue(const char *key, void *valueBuf, size_t bufLen, size_t *savedValueLen);
+    size_t getValue(String &key, void *valueBuf, size_t bufLen, size_t *savedValueLen);
+    size_t getValue(const char *key, void *valueBuf, size_t bufLen);
+    size_t getValue(String &key, void *valueBuf, size_t bufLen);
+    String getValue(const char *key);
+    String getValue(String &key);
+
+  /**
+   * @brief 根据key删除键值对，实际是改变flash中env的状态为delete，并改变ram中用来加快查找速度env cache数组的状态
+   * @param key 指向字符或字符串key的指针
+   * @param key String对象
+   * @return 返回运行状态
+   */
+    EfErrCode delValue(const char *key);
+	EfErrCode delValue(String &key);
+    #endif
+
+    #ifdef EF_USING_LOG
+    /* ef_log.c */
+	
+  /**
+   * @brief 根据index和size，读取spiflash指定内容
+   * @param index 起始索引，读取起始字节相对log首字节的偏移值，必须小于当前log文件的总长度
+   * @param log 指向用来存储log的内存地址的指针
+   * @param size 读取的字节数，如果index + size >当前log文件总长度，则只读取（当前文件总长 - index）字节数据 
+   * @return 返回运行状态
+   */
+    EfErrCode logRead(size_t index, void *log, size_t size);
+    EfErrCode logRead(size_t index, String &log, size_t size);
+
+  /**
+   * @brief 写log
+   * @param log 指向用来存储log的内存地址的指针
+   * @param size 写的字节数，必须是4的整数倍，如果不是，最后size%4个字节会丢失
+   * @return 返回运行状态
+   */	
+    EfErrCode logWrite(const void *log, size_t size);
+	EfErrCode logWrite(String &log, size_t size);
+	
+  /**
+   * @brief 格式化log
+   * @return 返回运行状态
+   */    
+	EfErrCode logClean(void);
+
+  /**
+   * @brief 获取使用的字节数
+   * @return 返回log区使用的字节数
+   */	
+    size_t logSize(void);
 ```
 
 ## Compatibility
 
 MCU                | Work Well    | Work Wrong   | Untested    | Remarks
 ------------------ | :----------: | :----------: | :---------: | -----
-Arduino uno        |      √       |              |             | 
-Mega2560        |      √       |              |             | 
-Leonardo        |      √       |              |             | 
-ESP32           |      √       |              |             | 
-micro:bit        |      √       |              |             | 
+FireBeetle         |      √       |              |             | 
 
 
 ## History
 
-- data 2019-6-25
-- version V0.1
+- data 2019-12-24
+- version V1.0
 
 
 ## Credits
 
-Written by Alexander(ouki.wang@dfrobot.com), 2019. (Welcome to our [website](https://www.dfrobot.com/))
+Written by Jack(yue.li@dfrobot.com), 2019. (Welcome to our [website](https://www.dfrobot.com/))
 
 
 

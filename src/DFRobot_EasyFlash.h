@@ -70,7 +70,7 @@ public:
     /* supported on ef_env.c */
 
   /**
-   * @brief 在数据库中设置键值对，注意key值不能超过32字节，value不能超过4010字节
+   * @brief 在数据库中设置键值对，注意key值不能超过32字节，字符串类型value不能超过128字节，非字符串类value不能超过4010字节
    * @param key 指向字符或字符串key的指针
    * @param key 含有key值的String对象
    * @param valueBuf 指向要写入数据的指针
