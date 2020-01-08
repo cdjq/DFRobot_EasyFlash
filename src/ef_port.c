@@ -88,7 +88,7 @@ EfErrCode ef_port_init(ef_env const **default_env, size_t *default_env_size) {
  */
 EfErrCode ef_port_read(uint32_t addr, uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
-    uint8_t i;
+    size_t i;
 	while(W25Q16_BUSY());
     CS_L;
 	transfer(0x03);
@@ -141,21 +141,31 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
  */
 EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
-	uint8_t i ;
-	while(W25Q16_BUSY());
-	Write_Enable();
-	CS_L;
-    transfer(0x02);
-    transfer(addr>>16);
-    transfer(addr>>8);
-    transfer(addr);
-    for(i=0;i<size;i++)
-    {
+	size_t temp;
+	while(size) {
+	  while(W25Q16_BUSY());
+	  Write_Enable();
+	  CS_L;
+      transfer(0x02);
+      transfer(addr>>16);
+      transfer(addr>>8);
+      transfer(addr);
+	  if(size>256)
+		max = 256;
+	  else 
+		max = size;
+      for(uint16_t i=0;i<temp;i++)
+      {
         transfer(*((uint8_t *)buf+i));
-    }
-    CS_H;
+      }
+      CS_H;
+	  addr += 256;
+	  buf += 8;
+	  size -= 256;
+	}  
     return result;
 }
+
 
 /**
  * lock the ENV ram cache
